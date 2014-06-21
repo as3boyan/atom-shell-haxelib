@@ -1,0 +1,11 @@
+{
+    "name": "atom-shell",
+    "url" : "https://github.com/as3boyan/atom-shell-haxelib",
+    "license": "MIT",
+    "tags": ["html5", "atom-shell", "chrome", "node.js"],
+    "description": "Haxelib which downloads atom-shell binary for your platform and keeps it updated",
+    "version": "0.5.0",
+    "releasenote": "",
+    "contributors": ["as3boyan"],
+    "dependencies": {}
+}
