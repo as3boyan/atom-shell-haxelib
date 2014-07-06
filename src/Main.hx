@@ -45,14 +45,25 @@ class AutoUpdateInfo
 
 class Main 
 {
-	//private static var NODEWEBKIT_WINDOWS:String = "http://s3.amazonaws.com/node-webkit/v0.9.2/node-webkit-v0.9.2-win-ia32.zip";
-	private static var nodeWebkitUrl:String;
-	private static var autoUpdateInfo:AutoUpdateInfo = new AutoUpdateInfo();
-	static private var localPath:String;
+	//static var NODEWEBKIT_WINDOWS:String = "http://s3.amazonaws.com/node-webkit/v0.9.2/node-webkit-v0.9.2-win-ia32.zip";
+	static var nodeWebkitUrl:String;
+	static var autoUpdateInfo:AutoUpdateInfo = new AutoUpdateInfo();
+	static var localPath:String;
+	static var debug:Bool = false;
 	
 	static function main() 
 	{	
-		var args:Array<String> = Sys.args();
+		var args:Array<String> = Sys.args().copy();
+		
+		for (arg in args)
+		{
+			if (arg == "-debug")
+			{
+				args.remove(arg);
+				debug = true;
+				break;
+			}
+		}
 		
 		if (args[0] == "setup")
 		{
@@ -140,8 +151,15 @@ class Main
 				}
 				
 				if (PlatformHelper.hostPlatform == Platform.LINUX)
-				{
-					ProcessHelper.runProcess("./bin", "./atom", params, false, true, false, true);
+				{				
+					if (!debug)
+					{
+						ProcessHelper.runProcess("./bin", "./atom", params, false, true, false, true);	
+					}
+					else
+					{
+						ProcessHelper.runCommand("./bin", "./atom", params, true, false, true);
+					}
 				}
 				else if (PlatformHelper.hostPlatform == Platform.MAC)
 				{
@@ -204,20 +222,21 @@ class Main
 		}
 	}
 	
-	private static function lookForNodeWebkitURL():Void
+	static function lookForNodeWebkitURL():Void
 	{
 		Sys.println("Looking for node-webkit url...");
 		
 		var args = Sys.args();
 		
 		//PathHelper.combine(args[args.length - 1], "rogerwang_node-webkit.html")
-		var data = sys.io.File.getContent("Releases_atom_atom-shell.html");
+// 		var data = sys.io.File.getContent("Releases_atom_atom-shell.html");
+		var data = Http.requestUrl("https://github.com/atom/atom-shell/releases");
 		//Http.requestUrl("https://github.com/rogerwang/node-webkit");
-		
-		var eregLinux64bit = ~/<a href="https:\/\/(.+releases.+linux-x64\.zip)/g;
-		var eregLinux32bit = ~/<a href="https:\/\/(.+releases.+linux-ia32\.zip)/g;
-		var eregWindows = ~/<a href="https:\/\/(.+releases.+win32-ia32\.zip)/g;
-		var eregMac = ~/<a href="https:\/\/(.+releases.+darwin-x64\.zip)/g;
+		//https://github.com/atom/atom-shell/releases
+		var eregLinux64bit = ~/<a href="(\/.+releases.+linux-x64\.zip)/g;
+		var eregLinux32bit = ~/<a href="(\/.+releases.+linux-ia32\.zip)/g;
+		var eregWindows = ~/<a href="(\/.+releases.+win32-ia32\.zip)/g;
+		var eregMac = ~/<a href="(\/.+releases.+darwin-x64\.zip)/g;
 		
 		if (data.indexOf("atom-shell") > -1)
 		{
@@ -257,20 +276,19 @@ class Main
 		
 		if (nodeWebkitUrl != null) 
 		{
-// 			trace(nodeWebkitUrl);
-			nodeWebkitUrl = "https://" + nodeWebkitUrl;
+			nodeWebkitUrl = "https://github.com" + nodeWebkitUrl;
 // 			trace(nodeWebkitUrl);
 			localPath = Path.withoutDirectory(nodeWebkitUrl);
 		}
 	}
 	
-	private static function setup():Void
+	static function setup():Void
 	{		
 		lookForNodeWebkitURL();
 		downloadAndExtract();
 	}
 	
-	private static function downloadAndExtract() 
+	static function downloadAndExtract() 
 	{
 		downloadFile(nodeWebkitUrl, true);
 			
@@ -309,7 +327,7 @@ class Main
 		return Sys.stdin ().readLine ();
 	}
 
-	private static function ask (question:String):Answer {
+	static function ask (question:String):Answer {
 
 		while (true) {
 
@@ -327,7 +345,7 @@ class Main
 
 	}
 	
-	private static function removeFile(path:String)
+	static function removeFile(path:String)
 	{
 		if (PlatformHelper.hostPlatform == Platform.WINDOWS)
 		{
@@ -341,8 +359,11 @@ class Main
 	
 	//Uses parts of code from lime-tools https://github.com/openfl/lime-tools/blob/ac2ca52e89c0d5e2758246415e9286dbc63c36a5/src/utils/PlatformSetup.hx
 	
-	private static function downloadFile(remotePath:String, ?enableInteration:Bool = false):Void
-	{		
+	static function downloadFile(remotePath:String, ?enableInteration:Bool = false):Void
+	{	
+		trace(localPath);
+		trace(remotePath);
+		
 		if (FileSystem.exists (localPath) && enableInteration) {
 
 			var answer = ask ("File found. Install existing file?");
@@ -391,7 +412,7 @@ class Main
 		}
 	}
 	
-	private static function extractFile (sourceZIP:String, targetPath:String, ignoreRootFolder:String = ""):Void {
+	static function extractFile (sourceZIP:String, targetPath:String, ignoreRootFolder:String = ""):Void {
 
 		var extension = Path.extension (sourceZIP);
 
